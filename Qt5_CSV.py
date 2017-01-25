@@ -134,16 +134,6 @@ class MyWindow(QtWidgets.QWidget):
                     for columnNumber in range(self.model.columnCount())]
                     writer.writerow(fields)
 
-
-
-#    @QtCore.pyqtSlot()
-#    def on_pushButtonLoad_clicked(self):
-#        result = QtWidgets.QFileDialog.getOpenFileName(self, "CSV laden",
-#                                                '/home',
-#                                                "Tabelle (*.csv *.txt)")#.decode('utf-8')
-#        if result:
-#            self.loadCsv(result)
-
     def handlePrint(self):
         dialog = QtPrintSupport.QPrintDialog()
         if dialog.exec_() == QtWidgets.QDialog.Accepted:
