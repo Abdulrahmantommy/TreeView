@@ -31,7 +31,7 @@ class MyWindow(QtWidgets.QWidget):
 
         self.pushButtonWrite = QtWidgets.QPushButton(self)
         self.pushButtonWrite.setText("Save CSV")
-        self.pushButtonWrite.clicked.connect(self.on_pushButtonWrite_clicked)
+        self.pushButtonWrite.clicked.connect(self.writeCsv)
         self.pushButtonWrite.setFixedWidth(80)
         self.pushButtonWrite.setStyleSheet(stylesheet(self))
 #        self.pushButtonWrite.move(100, 10)
@@ -97,13 +97,14 @@ class MyWindow(QtWidgets.QWidget):
         self.tableView.resizeColumnsToContents()
 
     def loadCsv(self, fileName):
-        fname = QtWidgets.QFileDialog.getOpenFileName(self, 'Open file', '/home')
-        print(fname)
-        if fname[0]:
-            f = open(fname[0], 'r')
+        fileName = QtWidgets.QFileDialog.getOpenFileName(self, "Open CSV",
+                QtCore.QDir.homePath(), "CSV (*.csv *.tsv)")
+
+        if fileName[0]:
+            print(fileName)
+            f = open(fileName[0], 'r')
             with f:
-#            with open(fileName, "rb") as fileInput:
-                self.fname = os.path.splitext(str(fname))[0].split("/")[-1]
+                self.fname = os.path.splitext(str(fileName))[0].split("/")[-1]
                 self.setWindowTitle(self.fname)
                 reader = csv.reader(f, delimiter = '\t')
                 self.model.clear()
@@ -119,21 +120,21 @@ class MyWindow(QtWidgets.QWidget):
                 if myitem is None:
                     item = QtGui.QStandardItem("")
                     self.model.setItem(row, column, item)
-        with open(fileName, "wb") as fileOutput:
-            writer = csv.writer(fileOutput, delimiter = '\t')
-            for rowNumber in range(self.model.rowCount()):
-                fields = [self.model.data(self.model.index(rowNumber, columnNumber),
-                        QtCore.Qt.DisplayRole).encode("utf-8")
-                    for columnNumber in range(self.model.columnCount())]
-                writer.writerow(fields)
+        fileName = QtWidgets.QFileDialog.getSaveFileName(self, "Save CSV",
+                "/home/list.csv", "CSV (*.csv)")
 
-    @QtCore.pyqtSlot()
-    def on_pushButtonWrite_clicked(self):
-        result = QFileDialog.getSaveFileName(self, "CSV speichern",
-                                                '/home',
-                                                "Tabelle (*.csv *.txt)")
-        if result:
-            self.writeCsv(result)
+        if fileName[0]:
+            print(fileName)
+            f = open(fileName[0], 'r')
+            with f:
+                writer = csv.writer(f, delimiter = '\t')
+                for rowNumber in range(self.model.rowCount()):
+                    fields = [self.model.data(self.model.index(rowNumber, columnNumber),
+                                        QtCore.Qt.DisplayRole)
+                    for columnNumber in range(self.model.columnCount())]
+                    writer.writerow(fields)
+
+
 
 #    @QtCore.pyqtSlot()
 #    def on_pushButtonLoad_clicked(self):
