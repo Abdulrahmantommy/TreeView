@@ -11,7 +11,7 @@ class MyWindow(QtWidgets.QWidget):
     def __init__(self, fileName, parent=None):
         super(MyWindow, self).__init__(parent)
         self.fileName = ""
-        self.fname = "List"
+        self.fname = "Liste"
         self.model =  QtGui.QStandardItemModel(self)
 
         self.tableView = QtWidgets.QTableView(self)
@@ -97,7 +97,7 @@ class MyWindow(QtWidgets.QWidget):
 
     def loadCsv(self, fileName):
         fileName, _ = QtWidgets.QFileDialog.getOpenFileName(self, "Open CSV",
-                QtCore.QDir.homePath(), "CSV (*.csv *.tsv)")
+                (QtCore.QDir.homePath()), "CSV (*.csv *.tsv)")
 
         if fileName:
             print(fileName)
@@ -205,6 +205,116 @@ class MyWindow(QtWidgets.QWidget):
 
     def finishedEdit(self):
         self.tableView.resizeColumnsToContents()
+
+    def contextMenuEvent(self, event):
+        self.menu = QtWidgets.QMenu(self)
+        # copy
+        copyAction = QtWidgets.QAction('Copy', self)
+        copyAction.triggered.connect(lambda: self.copyByContext(event))
+        # paste
+        pasteAction = QtWidgets.QAction('Paste', self)
+        pasteAction.triggered.connect(lambda: self.pasteByContext(event))
+        # cut
+        cutAction = QtWidgets.QAction('Cut', self)
+        cutAction.triggered.connect(lambda: self.cutByContext(event))
+        # delete selected Row
+        removeAction = QtWidgets.QAction('delete Row', self)
+        removeAction.triggered.connect(lambda: self.deleteRowByContext(event))
+        # add Row after
+        addAction = QtWidgets.QAction('insert new Row after', self)
+        addAction.triggered.connect(lambda: self.addRowByContext(event))
+        # add Row before
+        addAction2 = QtWidgets.QAction('insert new Row before', self)
+        addAction2.triggered.connect(lambda: self.addRowByContext2(event))
+        # add Column before
+        addColumnBeforeAction = QtWidgets.QAction('insert new Column before', self)
+        addColumnBeforeAction.triggered.connect(lambda: self.addColumnBeforeByContext(event))
+        # add Column after
+        addColumnAfterAction = QtWidgets.QAction('insert new Column after', self)
+        addColumnAfterAction.triggered.connect(lambda: self.addColumnAfterByContext(event))
+        # delete Column
+        deleteColumnAction = QtWidgets.QAction('delete Column', self)
+        deleteColumnAction.triggered.connect(lambda: self.deleteColumnByContext(event))
+        # add other required actions
+        self.menu.addAction(copyAction)
+        self.menu.addAction(pasteAction)
+        self.menu.addAction(cutAction)
+        self.menu.addSeparator()
+        self.menu.addAction(addAction)
+        self.menu.addAction(addAction2)
+        self.menu.addSeparator()
+        self.menu.addAction(addColumnBeforeAction)
+        self.menu.addAction(addColumnAfterAction)
+        self.menu.addSeparator()
+        self.menu.addAction(removeAction)
+        self.menu.addAction(deleteColumnAction)
+        self.menu.popup(QtGui.QCursor.pos())
+
+    def deleteRowByContext(self, event):
+        for i in self.tableView.selectionModel().selection().indexes():
+            row = i.row()
+            self.model.removeRow(row)
+            print("Row " + str(row) + " deleted")
+            self.tableView.selectRow(row)
+
+    def addRowByContext(self, event):
+        for i in self.tableView.selectionModel().selection().indexes():
+            row = i.row() + 1
+            self.model.insertRow(row)
+            print("Row at " + str(row) + " inserted")
+            self.tableView.selectRow(row)
+
+    def addRowByContext2(self, event):
+        for i in self.tableView.selectionModel().selection().indexes():
+            row = i.row()
+            self.model.insertRow(row)
+            print("Row at " + str(row) + " inserted")
+            self.tableView.selectRow(row)
+
+    def addColumnBeforeByContext(self, event):
+        for i in self.tableView.selectionModel().selection().indexes():
+            col = i.column()
+            self.model.insertColumn(col)
+            print("Column at " + str(col) + " inserted")
+
+    def addColumnAfterByContext(self, event):
+        for i in self.tableView.selectionModel().selection().indexes():
+            col = i.column() + 1
+            self.model.insertColumn(col)
+            print("Column at " + str(col) + " inserted")
+
+    def deleteColumnByContext(self, event):
+        for i in self.tableView.selectionModel().selection().indexes():
+            col = i.column()
+            self.model.removeColumn(col)
+            print("Column at " + str(col) + " removed")
+
+    def copyByContext(self, event):
+        for i in self.tableView.selectionModel().selection().indexes():
+            row = i.row()
+            col = i.column()
+            myitem = self.model.item(row,col)
+            if myitem is not None:
+                clip = QtWidgets.QApplication.clipboard()
+                clip.setText(myitem.text())
+
+    def pasteByContext(self, event):
+        for i in self.tableView.selectionModel().selection().indexes():
+            row = i.row()
+            col = i.column()
+            myitem = self.model.item(row,col)
+            clip = QtWidgets.QApplication.clipboard()
+            myitem.setText(clip.text())
+
+    def cutByContext(self, event):
+        for i in self.tableView.selectionModel().selection().indexes():
+            row = i.row()
+            col = i.column()
+            myitem = self.model.item(row,col)
+            if myitem is not None:
+                clip = QtWidgets.QApplication.clipboard()
+                clip.setText(myitem.text())
+                myitem.setText("")
 
 def stylesheet(self):
         return """
