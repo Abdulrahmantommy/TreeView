@@ -10,6 +10,7 @@ from PyQt5.QtCore import QFile
 class MyWindow(QtWidgets.QWidget):
     def __init__(self, fileName, parent=None):
         super(MyWindow, self).__init__(parent)
+        self.isChanged = False
         self.fileName = ""
         self.fname = "Liste"
         self.model =  QtGui.QStandardItemModel(self)
@@ -25,14 +26,20 @@ class MyWindow(QtWidgets.QWidget):
         self.pushButtonLoad = QtWidgets.QPushButton(self)
         self.pushButtonLoad.setText("Load CSV")
         self.pushButtonLoad.clicked.connect(self.loadCsv)
-        self.pushButtonLoad.setFixedWidth(80)
+        self.pushButtonLoad.setFixedWidth(60)
         self.pushButtonLoad.setStyleSheet(stylesheet(self))
 
         self.pushButtonWrite = QtWidgets.QPushButton(self)
-        self.pushButtonWrite.setText("Save CSV")
-        self.pushButtonWrite.clicked.connect(self.writeCsv)
-        self.pushButtonWrite.setFixedWidth(80)
+        self.pushButtonWrite.setText("Save")
+        self.pushButtonWrite.clicked.connect(self.saveOnQuit)
+        self.pushButtonWrite.setFixedWidth(60)
         self.pushButtonWrite.setStyleSheet(stylesheet(self))
+
+        self.pushButtonWrite2 = QtWidgets.QPushButton(self)
+        self.pushButtonWrite2.setText("Save as ...")
+        self.pushButtonWrite2.clicked.connect(self.writeCsv)
+        self.pushButtonWrite2.setFixedWidth(60)
+        self.pushButtonWrite2.setStyleSheet(stylesheet(self))
 
         self.pushButtonPreview = QtWidgets.QPushButton(self)
         self.pushButtonPreview.setText("Print Preview")
@@ -43,19 +50,19 @@ class MyWindow(QtWidgets.QWidget):
         self.pushButtonPrint = QtWidgets.QPushButton(self)
         self.pushButtonPrint.setText("Print")
         self.pushButtonPrint.clicked.connect(self.handlePrint)
-        self.pushButtonPrint.setFixedWidth(80)
+        self.pushButtonPrint.setFixedWidth(60)
         self.pushButtonPrint.setStyleSheet(stylesheet(self))
 
         self.pushAddRow = QtWidgets.QPushButton(self)
         self.pushAddRow.setText("add Row")
         self.pushAddRow.clicked.connect(self.addRow)
-        self.pushAddRow.setFixedWidth(80)
+        self.pushAddRow.setFixedWidth(60)
         self.pushAddRow.setStyleSheet(stylesheet(self))
 
         self.pushDeleteRow = QtWidgets.QPushButton(self)
         self.pushDeleteRow.setText("delete Row")
         self.pushDeleteRow.clicked.connect(self.removeRow)
-        self.pushDeleteRow.setFixedWidth(80)
+        self.pushDeleteRow.setFixedWidth(70)
         self.pushDeleteRow.setStyleSheet(stylesheet(self))
 
         self.pushAddColumn = QtWidgets.QPushButton(self)
@@ -80,24 +87,26 @@ class MyWindow(QtWidgets.QWidget):
         grid.setSpacing(10)
         grid.addWidget(self.pushButtonLoad, 0, 0)
         grid.addWidget(self.pushButtonWrite, 0, 1)
-        grid.addWidget(self.pushAddRow, 0, 2)
-        grid.addWidget(self.pushDeleteRow, 0, 3)
-        grid.addWidget(self.pushAddColumn, 0, 4)
-        grid.addWidget(self.pushDeleteColumn, 0, 5)
-        grid.addWidget(self.pushClear, 0, 6)
-        grid.addWidget(self.pushButtonPreview, 0, 7)
-        grid.addWidget(self.pushButtonPrint, 0, 8, 1, 1, QtCore.Qt.AlignRight)
-        grid.addWidget(self.tableView, 1, 0, 1, 9)
+        grid.addWidget(self.pushButtonWrite2, 0, 2)
+        grid.addWidget(self.pushAddRow, 0, 3)
+        grid.addWidget(self.pushDeleteRow, 0, 4)
+        grid.addWidget(self.pushAddColumn, 0, 5)
+        grid.addWidget(self.pushDeleteColumn, 0, 6)
+        grid.addWidget(self.pushClear, 0, 7)
+        grid.addWidget(self.pushButtonPreview, 0, 8)
+        grid.addWidget(self.pushButtonPrint, 0, 9, 1, 1, QtCore.Qt.AlignRight)
+        grid.addWidget(self.tableView, 1, 0, 1, 10)
         self.setLayout(grid)
 
         item = QtGui.QStandardItem()
         self.model.appendRow(item)
         self.model.setData(self.model.index(0, 0), "", 0)
         self.tableView.resizeColumnsToContents()
+        self.isChanged = False
 
     def loadCsv(self, fileName):
         fileName, _ = QtWidgets.QFileDialog.getOpenFileName(self, "Open CSV",
-                (QtCore.QDir.homePath()), "CSV (*.csv *.tsv)")
+                QtCore.QDir.homePath(), "CSV (*.csv *.tsv)")
 
         if fileName:
             print(fileName)
@@ -107,6 +116,7 @@ class MyWindow(QtWidgets.QWidget):
             ff.close()
             f = open(fileName, 'r')
             with f:
+                self.fileName = fileName
                 self.fname = os.path.splitext(str(fileName))[0].split("/")[-1]
                 self.setWindowTitle(self.fname)
                 if mytext.count(';') <= mytext.count('\t'):
@@ -123,8 +133,9 @@ class MyWindow(QtWidgets.QWidget):
                         items = [QtGui.QStandardItem(field) for field in row]
                         self.model.appendRow(items)
                     self.tableView.resizeColumnsToContents()
+                    self.isChanged = False
 
-    def writeCsv(self, fileName):
+    def writeCsv(self):
         # find empty cells
         for row in range(self.model.rowCount()):
             for column in range(self.model.columnCount()):
@@ -146,6 +157,7 @@ class MyWindow(QtWidgets.QWidget):
                     writer.writerow(fields)
                 self.fname = os.path.splitext(str(fileName))[0].split("/")[-1]
                 self.setWindowTitle(self.fname)
+                self.isChanged = False
 
     def handlePrint(self):
         dialog = QtPrintSupport.QPrintDialog()
@@ -181,20 +193,24 @@ class MyWindow(QtWidgets.QWidget):
         model = self.model
         indices = self.tableView.selectionModel().selectedRows() 
         for index in sorted(indices):
-            model.removeRow(index.row()) 
+            model.removeRow(index.row())
+            self.isChanged = True
 
     def addRow(self):
         item = QtGui.QStandardItem("")
         self.model.appendRow(item)
+        self.isChanged = True
 
     def clearList(self):
         self.model.clear()
+        self.isChanged = True
 
     def removeColumn(self):
         model = self.model
         indices = self.tableView.selectionModel().selectedColumns() 
         for index in sorted(indices):
-            model.removeColumn(index.column()) 
+            model.removeColumn(index.column())
+            self.isChanged = True
 
     def addColumn(self):
         count = self.model.columnCount()
@@ -202,9 +218,11 @@ class MyWindow(QtWidgets.QWidget):
         self.model.setColumnCount(count + 1)
         self.model.setData(self.model.index(0, count), "", 0)
         self.tableView.resizeColumnsToContents()
+        self.isChanged = True
 
     def finishedEdit(self):
         self.tableView.resizeColumnsToContents()
+        self.isChanged = True
 
     def contextMenuEvent(self, event):
         self.menu = QtWidgets.QMenu(self)
@@ -256,6 +274,7 @@ class MyWindow(QtWidgets.QWidget):
             self.model.removeRow(row)
             print("Row " + str(row) + " deleted")
             self.tableView.selectRow(row)
+            self.isChanged = True
 
     def addRowByContext(self, event):
         for i in self.tableView.selectionModel().selection().indexes():
@@ -263,6 +282,7 @@ class MyWindow(QtWidgets.QWidget):
             self.model.insertRow(row)
             print("Row at " + str(row) + " inserted")
             self.tableView.selectRow(row)
+            self.isChanged = True
 
     def addRowByContext2(self, event):
         for i in self.tableView.selectionModel().selection().indexes():
@@ -270,24 +290,28 @@ class MyWindow(QtWidgets.QWidget):
             self.model.insertRow(row)
             print("Row at " + str(row) + " inserted")
             self.tableView.selectRow(row)
+            self.isChanged = True
 
     def addColumnBeforeByContext(self, event):
         for i in self.tableView.selectionModel().selection().indexes():
             col = i.column()
             self.model.insertColumn(col)
             print("Column at " + str(col) + " inserted")
+            self.isChanged = True
 
     def addColumnAfterByContext(self, event):
         for i in self.tableView.selectionModel().selection().indexes():
             col = i.column() + 1
             self.model.insertColumn(col)
             print("Column at " + str(col) + " inserted")
+            self.isChanged = True
 
     def deleteColumnByContext(self, event):
         for i in self.tableView.selectionModel().selection().indexes():
             col = i.column()
             self.model.removeColumn(col)
             print("Column at " + str(col) + " removed")
+            self.isChanged = True
 
     def copyByContext(self, event):
         for i in self.tableView.selectionModel().selection().indexes():
@@ -305,6 +329,7 @@ class MyWindow(QtWidgets.QWidget):
             myitem = self.model.item(row,col)
             clip = QtWidgets.QApplication.clipboard()
             myitem.setText(clip.text())
+            self.isChanged = True
 
     def cutByContext(self, event):
         for i in self.tableView.selectionModel().selection().indexes():
@@ -315,6 +340,45 @@ class MyWindow(QtWidgets.QWidget):
                 clip = QtWidgets.QApplication.clipboard()
                 clip.setText(myitem.text())
                 myitem.setText("")
+                self.isChanged = True
+
+    def closeEvent(self, event):
+        if self.isChanged == True:
+            quit_msg = "Do you want to save changes?"
+            reply = QtWidgets.QMessageBox.question(self, 'Message', 
+                     quit_msg, QtWidgets.QMessageBox.Yes, QtWidgets.QMessageBox.No)
+            if reply == QtWidgets.QMessageBox.Yes:
+                event.accept()
+                self.saveOnQuit()
+                app.quit()
+            else:
+                app.quit()
+        else:
+            app.quit()
+        print("Goodbye ...")
+
+    def saveOnQuit(self):
+        if self.fileName == "":
+            self.writeCsv()
+        else:
+            # find empty cells
+            for row in range(self.model.rowCount()):
+                for column in range(self.model.columnCount()):
+                    myitem = self.model.item(row,column)
+                    if myitem is None:
+                        item = QtGui.QStandardItem("")
+                        self.model.setItem(row, column, item)
+            if self.fileName:
+                print(self.fileName)
+                f = open(self.fileName, 'w')
+                with f:
+                    writer = csv.writer(f, delimiter = '\t')
+                    for rowNumber in range(self.model.rowCount()):
+                        fields = [self.model.data(self.model.index(rowNumber, columnNumber),
+                                            QtCore.Qt.DisplayRole)
+                        for columnNumber in range(self.model.columnCount())]
+                        writer.writerow(fields)
+                    self.isChanged = False
 
 def stylesheet(self):
         return """
