@@ -3,7 +3,7 @@ TreeView C# Gtk Sharp
 
 made with MonoDevelop on Linux
 
-Open and Save as CSV (tab delimited)
+Open and Save CSV (tab delimited)
 
 # Qt_CSV.py
 CSV (tab delimited) Reader/Writer in Python (Qt4)
