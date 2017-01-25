@@ -10,3 +10,5 @@ CSV (tab delimited) Reader/Writer in Python (Qt4)
 
 # Qt5_CSV.py
 CSV (tab delimited) Reader/Writer in Python (Qt5)
+
+with contextual menu
