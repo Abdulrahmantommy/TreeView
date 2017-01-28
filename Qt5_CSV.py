@@ -8,7 +8,7 @@ from PyQt5.QtGui import QImage, QPainter
 from PyQt5.QtCore import QFile
 
 class MyWindow(QtWidgets.QWidget):
-    def __init__(self, fileName, parent=None):
+    def __init__(self, aPath, parent=None):
         super(MyWindow, self).__init__(parent)
         self.isChanged = False
         self.fileName = ""
@@ -104,9 +104,44 @@ class MyWindow(QtWidgets.QWidget):
         self.tableView.resizeColumnsToContents()
         self.isChanged = False
 
+        if len(sys.argv) > 1:
+            print(sys.argv[1])
+            self.fileName = sys.argv[1]
+            self.loadCsvOnOpen(self.fileName)
+        else:
+            print("no File")
+
+    def loadCsvOnOpen(self, fileName):
+        if fileName:
+            print(fileName)
+            ff = open(fileName, 'r')
+            mytext = ff.read()
+#            print(mytext)
+            ff.close()
+            f = open(fileName, 'r')
+            with f:
+                self.fileName = fileName
+                self.fname = os.path.splitext(str(fileName))[0].split("/")[-1]
+                self.setWindowTitle(self.fname)
+                if mytext.count(';') <= mytext.count('\t'):
+                    reader = csv.reader(f, delimiter = '\t')
+                    self.model.clear()
+                    for row in reader:    
+                        items = [QtGui.QStandardItem(field) for field in row]
+                        self.model.appendRow(items)
+                    self.tableView.resizeColumnsToContents()
+                else:
+                    reader = csv.reader(f, delimiter = ';')
+                    self.model.clear()
+                    for row in reader:    
+                        items = [QtGui.QStandardItem(field) for field in row]
+                        self.model.appendRow(items)
+                    self.tableView.resizeColumnsToContents()
+                    self.isChanged = False
+
     def loadCsv(self, fileName):
         fileName, _ = QtWidgets.QFileDialog.getOpenFileName(self, "Open CSV",
-                QtCore.QDir.homePath(), "CSV (*.csv *.tsv)")
+                (QtCore.QDir.homePath() + "/Dokumente/CSV"), "CSV (*.csv *.tsv *.txt)")
 
         if fileName:
             print(fileName)
@@ -144,7 +179,7 @@ class MyWindow(QtWidgets.QWidget):
                     item = QtGui.QStandardItem("")
                     self.model.setItem(row, column, item)
         fileName, _ = QtWidgets.QFileDialog.getSaveFileName(self, "Save File", 
-                        (QtCore.QDir.homePath() + "/" + self.fname + ".csv"),"CSV Files (*.csv)")
+                        (QtCore.QDir.homePath() + "/Dokumente/CSV/" + self.fname + ".csv"),"CSV Files (*.csv)")
         if fileName:
             print(fileName)
             f = open(fileName, 'w')
@@ -403,7 +438,7 @@ def stylesheet(self):
 			border: 1px inset grey;
 			height: 24px;
 			width: 80px;
-			color: black;
+			color: black;streamings 1
 			background-color: #e8e8e8;
 			background-position: bottom-left;
 		} 
@@ -416,6 +451,7 @@ def stylesheet(self):
 			background-color: green;
 		} 
 	"""
+
 
 if __name__ == "__main__":
     import sys
