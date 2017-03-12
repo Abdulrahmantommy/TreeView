@@ -104,10 +104,13 @@ class MyWindow(QtWidgets.QWidget):
         self.tableView.resizeColumnsToContents()
         self.isChanged = False
 
+        print("Welcome to CSV Reader")
+
         if len(sys.argv) > 1:
             print(sys.argv[1])
             self.fileName = sys.argv[1]
             self.loadCsvOnOpen(self.fileName)
+            print(self.fileName + "loaded")
         else:
             print("no File")
 
@@ -145,12 +148,15 @@ class MyWindow(QtWidgets.QWidget):
 
         if fileName:
             print(fileName)
+            font = QtGui.QFont()
+            font.setBold(True)
             ff = open(fileName, 'r')
             mytext = ff.read()
 #            print(mytext)
             ff.close()
             f = open(fileName, 'r')
             with f:
+                i = int(1)
                 self.fileName = fileName
                 self.fname = os.path.splitext(str(fileName))[0].split("/")[-1]
                 self.setWindowTitle(self.fname)
@@ -160,15 +166,22 @@ class MyWindow(QtWidgets.QWidget):
                     for row in reader:    
                         items = [QtGui.QStandardItem(field) for field in row]
                         self.model.appendRow(items)
-                    self.tableView.resizeColumnsToContents()
+                        self.model.setHeaderData(i - 1, QtCore.Qt.Horizontal, "Spalte " + str(i))
+                        i = i + 1
                 else:
                     reader = csv.reader(f, delimiter = ';')
                     self.model.clear()
                     for row in reader:    
                         items = [QtGui.QStandardItem(field) for field in row]
                         self.model.appendRow(items)
-                    self.tableView.resizeColumnsToContents()
-                    self.isChanged = False
+                        self.model.setHeaderData(i - 1, QtCore.Qt.Horizontal, "Spalte " + str(i))
+#                        self.model.setHeaderData(i - 1, QtCore.Qt.Horizontal, QtGui.QStandardItem(self.model.item(0, i - 1)).text())
+                        i = i + 1
+                self.model.removeRow(0)
+                self.tableView.selectRow(0)
+#                self.model.item(0, 0).setFont(font)
+                self.tableView.resizeColumnsToContents()
+                self.isChanged = False
 
     def writeCsv(self):
         # find empty cells
@@ -185,6 +198,7 @@ class MyWindow(QtWidgets.QWidget):
             f = open(fileName, 'w')
             with f:
                 writer = csv.writer(f, delimiter = '\t')
+#                writer.writerow(self.model.HorizontalHeader().text())
                 for rowNumber in range(self.model.rowCount()):
                     fields = [self.model.data(self.model.index(rowNumber, columnNumber),
                                         QtCore.Qt.DisplayRole)
@@ -217,7 +231,12 @@ class MyWindow(QtWidgets.QWidget):
         document = QtGui.QTextDocument()
         cursor = QtGui.QTextCursor(document)
         model = self.tableView.model()
-        table = cursor.insertTable(model.rowCount(), model.columnCount())
+        tableFormat = QtGui.QTextTableFormat()
+        tableFormat.setBorder(0.2)
+        tableFormat.setCellSpacing(0);
+        tableFormat.setTopMargin(0);
+        tableFormat.setCellPadding(4)
+        table = cursor.insertTable(model.rowCount(), model.columnCount(), tableFormat)
         for row in range(table.rows()):
             for column in range(table.columns()):
                 cursor.insertText(model.item(row, column).text())
@@ -421,11 +440,21 @@ def stylesheet(self):
         {
 			border: 1px solid grey;
 			border-radius: 0px;
-			font-size: 12px;
+            font-family: DroidSans;
+			font-size: 11px;
         	background-color: #f8f8f8;
-			selection-color: white;
-			selection-background-color: #00ED56;
+            selection-color: #e9e9e9
         }
+        QTableView::item:hover
+        {   
+            color: black;
+            background:#CFCA59;            
+        }
+        
+        QTableView::item:selected {
+            color: #e9e9e9;
+            background: #2F6299;
+        } 
 
 		QTableView QTableCornerButton::section {
     		background: #D6D1D1;
@@ -435,20 +464,17 @@ def stylesheet(self):
 		QPushButton
 		{
 			font-size: 11px;
-			border: 1px inset grey;
-			height: 24px;
-			width: 80px;
-			color: black;streamings 1
-			background-color: #e8e8e8;
-			background-position: bottom-left;
 		} 
 
 		QPushButton::hover
 		{
-			border: 2px inset goldenrod;
+            font-size: 11px;
+			border: 2px inset #353535;
+			font-style: oblique;
 			font-weight: bold;
-			color: #e8e8e8;
-			background-color: green;
+			color: #90150A; 
+            border-radius: 4px;
+			background-color: #C5C5C5;
 		} 
 	"""
 
