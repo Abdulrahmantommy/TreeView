@@ -116,43 +116,11 @@ class MyWindow(QtWidgets.QWidget):
 
     def loadCsvOnOpen(self, fileName):
         if fileName:
-            print(fileName)
-            ff = open(fileName, 'r')
-            mytext = ff.read()
-#            print(mytext)
-            ff.close()
-            f = open(fileName, 'r')
-            with f:
-                self.fileName = fileName
-                self.fname = os.path.splitext(str(fileName))[0].split("/")[-1]
-                self.setWindowTitle(self.fname)
-                if mytext.count(';') <= mytext.count('\t'):
-                    reader = csv.reader(f, delimiter = '\t')
-                    self.model.clear()
-                    for row in reader:    
-                        items = [QtGui.QStandardItem(field) for field in row]
-                        self.model.appendRow(items)
-                    self.tableView.resizeColumnsToContents()
-                else:
-                    reader = csv.reader(f, delimiter = ';')
-                    self.model.clear()
-                    for row in reader:    
-                        items = [QtGui.QStandardItem(field) for field in row]
-                        self.model.appendRow(items)
-                    self.tableView.resizeColumnsToContents()
-                    self.isChanged = False
-
-    def loadCsv(self, fileName):
-        fileName, _ = QtWidgets.QFileDialog.getOpenFileName(self, "Open CSV",
-                (QtCore.QDir.homePath() + "/Dokumente/CSV"), "CSV (*.csv *.tsv *.txt)")
-
-        if fileName:
-            print(fileName)
+            print(fileName + " loaded")
             font = QtGui.QFont()
             font.setBold(True)
             ff = open(fileName, 'r')
             mytext = ff.read()
-#            print(mytext)
             ff.close()
             f = open(fileName, 'r')
             with f:
@@ -166,7 +134,7 @@ class MyWindow(QtWidgets.QWidget):
                     for row in reader:    
                         items = [QtGui.QStandardItem(field) for field in row]
                         self.model.appendRow(items)
-                        self.model.setHeaderData(i - 1, QtCore.Qt.Horizontal, "Spalte " + str(i))
+                        self.model.setHeaderData(i - 1, QtCore.Qt.Horizontal, "Column " + str(i))
                         i = i + 1
                 else:
                     reader = csv.reader(f, delimiter = ';')
@@ -174,14 +142,20 @@ class MyWindow(QtWidgets.QWidget):
                     for row in reader:    
                         items = [QtGui.QStandardItem(field) for field in row]
                         self.model.appendRow(items)
-                        self.model.setHeaderData(i - 1, QtCore.Qt.Horizontal, "Spalte " + str(i))
-#                        self.model.setHeaderData(i - 1, QtCore.Qt.Horizontal, QtGui.QStandardItem(self.model.item(0, i - 1)).text())
+                        self.model.setHeaderData(i - 1, QtCore.Qt.Horizontal, "Column " + str(i))
+
                         i = i + 1
                 self.model.removeRow(0)
                 self.tableView.selectRow(0)
-#                self.model.item(0, 0).setFont(font)
+
                 self.tableView.resizeColumnsToContents()
                 self.isChanged = False
+
+    def loadCsv(self, fileName):
+        fileName, _ = QtWidgets.QFileDialog.getOpenFileName(self, "Open CSV",
+                (QtCore.QDir.homePath() + "/Dokumente/CSV"), "CSV (*.csv *.tsv *.txt)")
+        if fileName:
+            self.loadCsvOnOpen(fileName)
 
     def writeCsv(self):
         # find empty cells
@@ -198,7 +172,6 @@ class MyWindow(QtWidgets.QWidget):
             f = open(fileName, 'w')
             with f:
                 writer = csv.writer(f, delimiter = '\t')
-#                writer.writerow(self.model.HorizontalHeader().text())
                 for rowNumber in range(self.model.rowCount()):
                     fields = [self.model.data(self.model.index(rowNumber, columnNumber),
                                         QtCore.Qt.DisplayRole)
@@ -209,15 +182,23 @@ class MyWindow(QtWidgets.QWidget):
                 self.isChanged = False
 
     def handlePrint(self):
-        dialog = QtPrintSupport.QPrintDialog()
-        if dialog.exec_() == QtWidgets.QDialog.Accepted:
-            self.handlePaintRequest(dialog.printer())
+        if self.model.rowCount() == 0:
+            print("no rows")
+        else:
+            dialog = QtPrintSupport.QPrintDialog()
+            if dialog.exec_() == QtWidgets.QDialog.Accepted:
+                self.handlePaintRequest(dialog.printer())
+                print("Document printed")
 
     def handlePreview(self):
-        dialog = QtPrintSupport.QPrintPreviewDialog()
-        dialog.setFixedSize(1000,700)
-        dialog.paintRequested.connect(self.handlePaintRequest)
-        dialog.exec_()
+        if self.model.rowCount() == 0:
+            print("no rows")
+        else:
+            dialog = QtPrintSupport.QPrintPreviewDialog()
+            dialog.setFixedSize(1000,700)
+            dialog.paintRequested.connect(self.handlePaintRequest)
+            dialog.exec_()
+            print("Print Preview closed")
 
     def handlePaintRequest(self, printer):
         # find empty cells
@@ -233,10 +214,12 @@ class MyWindow(QtWidgets.QWidget):
         model = self.tableView.model()
         tableFormat = QtGui.QTextTableFormat()
         tableFormat.setBorder(0.2)
+        tableFormat.setBorderStyle(3)
         tableFormat.setCellSpacing(0);
         tableFormat.setTopMargin(0);
         tableFormat.setCellPadding(4)
         table = cursor.insertTable(model.rowCount(), model.columnCount(), tableFormat)
+        print(self.model.horizontalHeaderItem(0).text())
         for row in range(table.rows()):
             for column in range(table.columns()):
                 cursor.insertText(model.item(row, column).text())
