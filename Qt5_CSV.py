@@ -21,6 +21,7 @@ class MyWindow(QtWidgets.QWidget):
         self.tableView.horizontalHeader().setStretchLastSection(True)
         self.tableView.setShowGrid(True)
         self.tableView.setGeometry(10, 50, 780, 645)
+	self.tableView.verticalHeader().setSectionResizeMode(3)
         self.model.dataChanged.connect(self.finishedEdit)
 
         self.pushButtonLoad = QtWidgets.QPushButton(self)
