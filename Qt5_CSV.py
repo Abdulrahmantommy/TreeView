@@ -145,7 +145,6 @@ class MyWindow(QtWidgets.QWidget):
                         self.model.setHeaderData(i - 1, QtCore.Qt.Horizontal, "Column " + str(i))
 
                         i = i + 1
-                self.model.removeRow(0)
                 self.tableView.selectRow(0)
 
                 self.tableView.resizeColumnsToContents()
